@@ -1,8 +1,10 @@
 node_modules
 dist
+dist-wiki
 .DS_Store
 *.local
 public/knowledge
+wiki/content
 wiki/node_modules
 wiki/public
 wiki/.quartz-cache

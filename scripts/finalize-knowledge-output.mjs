@@ -1,4 +1,4 @@
-import { copyFile, mkdir, readdir } from "node:fs/promises";
+import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 const rootDir = process.cwd();
@@ -34,9 +34,41 @@ async function createPrettyUrlAlias(htmlFilePath) {
   const baseName = path.basename(htmlFilePath, ".html");
   const aliasDir = path.join(parentDir, baseName);
   const aliasIndex = path.join(aliasDir, "index.html");
+  const rawHtml = await readFile(htmlFilePath, "utf8");
+  const aliasHtml = rewriteRelativeUrlsForNestedAlias(rawHtml);
 
   await mkdir(aliasDir, { recursive: true });
-  await copyFile(htmlFilePath, aliasIndex);
+  await writeFile(aliasIndex, aliasHtml, "utf8");
+}
+
+function isRelativeUrl(value) {
+  return (
+    value &&
+    !value.startsWith("#") &&
+    !value.startsWith("/") &&
+    !value.startsWith("//") &&
+    !/^[a-z][a-z0-9+.-]*:/i.test(value)
+  );
+}
+
+function nestRelativeUrl(value) {
+  return isRelativeUrl(value) ? `../${value}` : value;
+}
+
+function rewriteRelativeUrlsForNestedAlias(html) {
+  return html
+    .replace(/\b(href|src)=(")([^"]+)(")/g, (_match, attr, openQuote, value, closeQuote) => {
+      return `${attr}=${openQuote}${nestRelativeUrl(value)}${closeQuote}`;
+    })
+    .replace(/\b(href|src)=(')([^']+)(')/g, (_match, attr, openQuote, value, closeQuote) => {
+      return `${attr}=${openQuote}${nestRelativeUrl(value)}${closeQuote}`;
+    })
+    .replace(/\bfetch\((")([^"]+)(")\)/g, (_match, openQuote, value, closeQuote) => {
+      return `fetch(${openQuote}${nestRelativeUrl(value)}${closeQuote})`;
+    })
+    .replace(/\bfetch\((')([^']+)(')\)/g, (_match, openQuote, value, closeQuote) => {
+      return `fetch(${openQuote}${nestRelativeUrl(value)}${closeQuote})`;
+    });
 }
 
 async function main() {
