@@ -55,6 +55,31 @@ function nestRelativeUrl(value) {
   return isRelativeUrl(value) ? `../${value}` : value;
 }
 
+function hasFileExtension(value) {
+  const pathPart = value.split("#", 1)[0].split("?", 1)[0];
+  const lastSegment = pathPart.split("/").pop() ?? "";
+
+  return /\.[A-Za-z0-9]+$/.test(lastSegment);
+}
+
+function isPrettyInternalPageUrl(value) {
+  return isRelativeUrl(value) && !value.endsWith("/") && !hasFileExtension(value);
+}
+
+function normalizePrettyInternalPageUrl(value) {
+  return isPrettyInternalPageUrl(value) ? `${value}/` : value;
+}
+
+function rewriteInternalLinksToPrettyUrls(html) {
+  return html
+    .replace(/\bhref=(")([^"]+)(")/g, (_match, openQuote, value, closeQuote) => {
+      return `href=${openQuote}${normalizePrettyInternalPageUrl(value)}${closeQuote}`;
+    })
+    .replace(/\bhref=(')([^']+)(')/g, (_match, openQuote, value, closeQuote) => {
+      return `href=${openQuote}${normalizePrettyInternalPageUrl(value)}${closeQuote}`;
+    });
+}
+
 function rewriteRelativeUrlsForNestedAlias(html) {
   return html
     .replace(/\b(href|src)=(")([^"]+)(")/g, (_match, attr, openQuote, value, closeQuote) => {
@@ -75,6 +100,13 @@ async function main() {
   const htmlFiles = await collectHtmlFiles(outputDir);
 
   for (const htmlFile of htmlFiles) {
+    const rawHtml = await readFile(htmlFile, "utf8");
+    const normalizedHtml = rewriteInternalLinksToPrettyUrls(rawHtml);
+
+    if (normalizedHtml !== rawHtml) {
+      await writeFile(htmlFile, normalizedHtml, "utf8");
+    }
+
     await createPrettyUrlAlias(htmlFile);
   }
 
