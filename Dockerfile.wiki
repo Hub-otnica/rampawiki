@@ -6,6 +6,7 @@ COPY scripts ./scripts
 COPY knowledge ./knowledge
 COPY wiki/package.json wiki/package-lock.json ./wiki/
 RUN npm --prefix wiki ci
+RUN npm --prefix wiki install @myriaddreamin/typst-ts-node-compiler-linux-x64-gnu@0.6.0 --no-save
 
 COPY wiki ./wiki
 

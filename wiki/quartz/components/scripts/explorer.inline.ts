@@ -270,7 +270,7 @@ document.addEventListener("prenav", async () => {
 })
 
 document.addEventListener("nav", async (e: CustomEventMap["nav"]) => {
-  const currentSlug = e.detail.url
+  const currentSlug = (document.body.dataset.slug || e.detail.url) as FullSlug
   await setupExplorer(currentSlug)
 
   // if mobile hamburger is visible, collapse by default
