@@ -90,6 +90,7 @@ function createFileNode(currentSlug: FullSlug, node: FileTrieNode): HTMLLIElemen
   const a = li.querySelector("a") as HTMLAnchorElement
   a.href = prettyExplorerUrl(node.slug)
   a.dataset.for = node.slug
+  a.dataset.routerIgnore = "true"
   a.textContent = node.displayName
 
   if (currentSlug === node.slug) {
@@ -125,6 +126,7 @@ function createFolderNode(
     const a = document.createElement("a")
     a.href = prettyExplorerUrl(folderPath)
     a.dataset.for = folderPath
+    a.dataset.routerIgnore = "true"
     a.className = "folder-title"
     a.textContent = node.displayName
     button.replaceWith(a)
